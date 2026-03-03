@@ -1,0 +1,46 @@
+{
+  "categories": {
+    "access_control": { "weight": 0.25 },
+    "data_protection": { "weight": 0.25 },
+    "compliance": { "weight": 0.20 },
+    "incident_history": { "weight": 0.30 }
+  },
+  "questions": [
+    {
+      "id": "mfa",
+      "category": "access_control",
+      "prompt": "Is MFA enforced for all users?",
+      "scoring": { "yes": 0, "partial": 50, "no": 100, "unknown": 70 }
+    },
+    {
+      "id": "sso",
+      "category": "access_control",
+      "prompt": "Does the vendor support SSO/SAML?",
+      "scoring": { "yes": 0, "no": 60, "unknown": 40 }
+    },
+    {
+      "id": "encrypt_at_rest",
+      "category": "data_protection",
+      "prompt": "Is data encrypted at rest?",
+      "scoring": { "yes": 0, "no": 100, "unknown": 70 }
+    },
+    {
+      "id": "encrypt_in_transit",
+      "category": "data_protection",
+      "prompt": "Is data encrypted in transit (TLS)?",
+      "scoring": { "yes": 0, "no": 100, "unknown": 70 }
+    },
+    {
+      "id": "soc2",
+      "category": "compliance",
+      "prompt": "Does the vendor have a current SOC 2 Type II report?",
+      "scoring": { "yes": 0, "in_progress": 40, "no": 80, "unknown": 60 }
+    },
+    {
+      "id": "breach_3y",
+      "category": "incident_history",
+      "prompt": "Has the vendor had a breach in the last 3 years?",
+      "scoring": { "yes": 100, "no": 0, "unknown": 70 }
+    }
+  ]
+}
