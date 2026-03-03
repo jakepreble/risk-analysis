@@ -48,6 +48,9 @@ def score_vendor(vendor_name: str, responses: Dict[str, str], weights_spec: Dict
     for cat, meta in categories.items():
         total += float(meta["weight"]) * category_scores.get(cat, 0.0)
 
+    if responses.get("breach_3y") == "yes":
+        total = max(total, 70.0)
+
     return RiskResult(
         vendor_name=vendor_name,
         total_score=round(total, 2),

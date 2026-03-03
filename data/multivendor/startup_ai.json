@@ -1,0 +1,27 @@
+{
+  "vendor_name": "StartupAI",
+  "responses": {
+    "mfa": "partial",
+    "sso": "no",
+    "encrypt_at_rest": "yes",
+    "encrypt_in_transit": "yes",
+    "soc2": "no",
+    "breach_3y": "no"
+  },
+  "external_scan": {
+    "open_ports": [22, 443],
+    "critical_services_exposed": 1,
+    "tls_grade": "C",
+    "security_headers_missing": 3
+  },
+  "vulnerabilities": {
+    "max_cvss": 8.9,
+    "critical_cves": 1,
+    "high_cves": 4
+  },
+  "data_profile": {
+    "handles_pii": false,
+    "handles_financials": false,
+    "records_estimate": 20000
+  }
+}

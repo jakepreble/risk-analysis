@@ -1,0 +1,27 @@
+{
+  "vendor_name": "LegacyCRM",
+  "responses": {
+    "mfa": "no",
+    "sso": "no",
+    "encrypt_at_rest": "no",
+    "encrypt_in_transit": "yes",
+    "soc2": "no",
+    "breach_3y": "yes"
+  },
+  "external_scan": {
+    "open_ports": [443, 3389],
+    "critical_services_exposed": 1,
+    "tls_grade": "C",
+    "security_headers_missing": 4
+  },
+  "vulnerabilities": {
+    "max_cvss": 9.2,
+    "critical_cves": 2,
+    "high_cves": 5
+  },
+  "data_profile": {
+    "handles_pii": true,
+    "handles_financials": false,
+    "records_estimate": 450000
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "vendor_name": "HRCloud",
+  "responses": {
+    "mfa": "partial",
+    "sso": "yes",
+    "encrypt_at_rest": "yes",
+    "encrypt_in_transit": "yes",
+    "soc2": "in_progress",
+    "breach_3y": "no"
+  },
+  "external_scan": {
+    "open_ports": [443],
+    "critical_services_exposed": 0,
+    "tls_grade": "B",
+    "security_headers_missing": 2
+  },
+  "vulnerabilities": {
+    "max_cvss": 8.4,
+    "critical_cves": 1,
+    "high_cves": 2
+  },
+  "data_profile": {
+    "handles_pii": true,
+    "handles_financials": true,
+    "records_estimate": 300000
+  }
+}

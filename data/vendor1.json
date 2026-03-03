@@ -1,0 +1,27 @@
+{
+    "vendor_name": "Example SaaS Co",
+    "responses": {
+      "mfa": "partial",
+      "sso": "yes",
+      "encrypt_at_rest": "yes",
+      "encrypt_in_transit": "yes",
+      "soc2": "in_progress",
+      "breach_3y": "unknown"
+    },
+    "external_scan": {
+      "open_ports": [22, 3389, 443],
+      "critical_services_exposed": 1,
+      "tls_grade": "C",
+      "security_headers_missing": 3
+    },
+    "vulnerabilities": {
+      "max_cvss": 9.1,
+      "critical_cves": 2,
+      "high_cves": 4
+    },
+    "data_profile": {
+      "handles_pii": true,
+      "handles_financial": true,
+      "records_estimate": 250000
+    }
+  }

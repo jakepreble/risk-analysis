@@ -1,0 +1,27 @@
+{
+  "vendor_name": "Analyticsly",
+  "responses": {
+    "mfa": "yes",
+    "sso": "yes",
+    "encrypt_at_rest": "yes",
+    "encrypt_in_transit": "yes",
+    "soc2": "yes",
+    "breach_3y": "no"
+  },
+  "external_scan": {
+    "open_ports": [443, 22],
+    "critical_services_exposed": 0,
+    "tls_grade": "B",
+    "security_headers_missing": 1
+  },
+  "vulnerabilities": {
+    "max_cvss": 7.8,
+    "critical_cves": 1,
+    "high_cves": 3
+  },
+  "data_profile": {
+    "handles_pii": true,
+    "handles_financials": false,
+    "records_estimate": 120000
+  }
+}

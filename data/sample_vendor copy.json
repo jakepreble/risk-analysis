@@ -1,0 +1,11 @@
+{
+    "vendor_name": "Example SaaS Co",
+    "responses": {
+      "mfa": "partial",
+      "sso": "yes",
+      "encrypt_at_rest": "yes",
+      "encrypt_in_transit": "yes",
+      "soc2": "in_progress",
+      "breach_3y": "unknown"
+    }
+  }
