@@ -40,7 +40,7 @@
             "id": "breach_3y",
             "category": "incident_history",
             "prompt": "Has the vendor had a breach in the last 3 years?",
-            "scoring": { "yes": 0, "no": 80, "unknown": 70 }
+            "scoring": { "yes": 90, "no": 0, "unknown": 70 }
         }
     ]
 }

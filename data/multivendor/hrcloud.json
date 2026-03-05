@@ -15,13 +15,13 @@
     "security_headers_missing": 2
   },
   "vulnerabilities": {
-    "max_cvss": 8.4,
-    "critical_cves": 1,
-    "high_cves": 2
+    "max_cvss": 6.8,
+    "critical_cves": 0,
+    "high_cves": 1
   },
   "data_profile": {
     "handles_pii": true,
     "handles_financials": true,
-    "records_estimate": 300000
+    "records_estimate": 200000
   }
 }

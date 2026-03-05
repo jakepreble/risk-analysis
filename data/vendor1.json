@@ -21,7 +21,7 @@
     },
     "data_profile": {
       "handles_pii": true,
-      "handles_financial": true,
+      "handles_financials": true,
       "records_estimate": 250000
     }
   }

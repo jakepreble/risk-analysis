@@ -17,14 +17,14 @@ def impact_multiplier(data_profile: Dict[str, Any]) -> ImpactModel:
     mult = 1.0
 
     handles_pii = bool(data_profile.get("handles_pii"))
-    handles_financial = bool(data_profile.get("handles_financials"))
+    handles_financials = bool(data_profile.get("handles_financials"))
 
     details["handles_pii"] = handles_pii
-    details["handles_financials"] = handles_financial
+    details["handles_financials"] = handles_financials
 
     if handles_pii:
         mult += 0.2
-    if handles_financial:
+    if handles_financials:
         mult += 0.3
 
     try:

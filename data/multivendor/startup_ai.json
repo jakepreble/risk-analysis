@@ -11,13 +11,13 @@
   "external_scan": {
     "open_ports": [22, 443],
     "critical_services_exposed": 1,
-    "tls_grade": "C",
+    "tls_grade": "B",
     "security_headers_missing": 3
   },
   "vulnerabilities": {
-    "max_cvss": 8.9,
+    "max_cvss": 2.1,
     "critical_cves": 1,
-    "high_cves": 4
+    "high_cves": 3
   },
   "data_profile": {
     "handles_pii": false,

@@ -3,21 +3,21 @@
   "responses": {
     "mfa": "yes",
     "sso": "yes",
-    "encrypt_at_rest": "yes",
+    "encrypt_at_rest": "no",
     "encrypt_in_transit": "yes",
     "soc2": "yes",
     "breach_3y": "no"
   },
   "external_scan": {
-    "open_ports": [443, 22],
+    "open_ports": [443],
     "critical_services_exposed": 0,
-    "tls_grade": "B",
+    "tls_grade": "A",
     "security_headers_missing": 1
   },
   "vulnerabilities": {
-    "max_cvss": 7.8,
-    "critical_cves": 1,
-    "high_cves": 3
+    "max_cvss": 6.1,
+    "critical_cves": 0,
+    "high_cves": 1
   },
   "data_profile": {
     "handles_pii": true,

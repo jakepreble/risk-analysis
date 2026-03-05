@@ -23,7 +23,7 @@ class RiskResult:
 def tier_from_score(score: float) -> str:
     if score <= 30:
         return "LOW"
-    if score <= 60:
+    if score <= 65:
         return "MEDIUM"
     return "HIGH"
 
