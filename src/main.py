@@ -71,6 +71,8 @@ def _recommendations(result) -> list[str]:
     vuln_score = float(getattr(result.vulnerabilities, "score", 0.0))
     exposure_score = float(getattr(result.exposure, "score", 0.0))
     impact_mult = float(getattr(result.impact, "multiplier", 1.0))
+    amplifications = dict(getattr(result, "amplifications", {}) or {})
+    meaningful_amps = [(k, float(v)) for k, v in amplifications.items() if float(v) > 0]
 
     if vuln_score >= 15:
         recs.append("Address elevated vulnerabilities before onboarding and request remediation evidence.")
@@ -81,6 +83,17 @@ def _recommendations(result) -> list[str]:
         recs.append("Reduce unnecessary internet exposure and confirm all externally reachable services are expected.")
     elif exposure_score > 0:
         recs.append("Validate external exposure and restrict access to sensitive services where possible.")
+
+    if meaningful_amps:
+        amp_names = [k.replace("_", " ") for k, _ in sorted(meaningful_amps, key=lambda kv: kv[1], reverse=True)]
+        if len(amp_names) == 1:
+            recs.append(f"Address the amplification factor '{amp_names[0]}' and add compensating controls to reduce its impact.")
+        else:
+            recs.append(
+                "Address the main amplification factors ("
+                + ", ".join(amp_names[:2])
+                + ") and add compensating controls to reduce their impact."
+            )
 
     if impact_mult >= 1.5:
         recs.append("Because vendor impact is high, require stronger contractual and monitoring controls.")
@@ -100,166 +113,18 @@ def _recommendations(result) -> list[str]:
     return recs
 
 
+# Score confidence based on missing or unsure answers
 def _confidence_label(warnings: list[str]) -> str:
     if not warnings:
         return "HIGH"
 
     joined = " | ".join(warnings).lower()
-    # Missing/invalid answers tend to understate or destabilize the score
     if "invalid" in joined or "missing answers" in joined or "no questions" in joined:
         return "LOW"
     return "MEDIUM"
 
-def _vuln_counts(result) -> dict[str, int]:
-    """Best-effort extraction of vuln severity counts from result."""
-    possible_sources: list[object] = []
 
-    # 1) Scored result object
-    v = getattr(result, "vulnerabilities", None)
-    if v is not None:
-        possible_sources.append(v)
 
-    for source in possible_sources:
-        # If source itself is already a severity-count dict like
-        # {"critical": 1, "high": 3, "medium": 4}
-        if isinstance(source, dict):
-            lowered = {str(k).lower(): v for k, v in source.items()}
-            if any(k in lowered for k in ("critical", "high", "medium", "low", "info")):
-                out: dict[str, int] = {}
-                for k, val in lowered.items():
-                    try:
-                        out[k] = int(val)
-                    except Exception:
-                        continue
-                if out:
-                    return out
-
-            # Common nested shapes
-            for key in ("counts", "severity_counts", "by_severity", "summary"):
-                d = source.get(key)
-                if isinstance(d, dict):
-                    out: dict[str, int] = {}
-                    for k, val in d.items():
-                        try:
-                            out[str(k).lower()] = int(val)
-                        except Exception:
-                            continue
-                    if out:
-                        return out
-
-            # Findings list inside raw dict
-            findings = source.get("findings") or source.get("items") or source.get("vulns")
-            if isinstance(findings, list):
-                out: dict[str, int] = {}
-                for f in findings:
-                    if not isinstance(f, dict):
-                        continue
-                    sev = f.get("severity") or f.get("sev") or f.get("level")
-                    if sev is None:
-                        continue
-                    key = str(sev).lower()
-                    out[key] = out.get(key, 0) + 1
-                if out:
-                    return out
-
-        # Object-style result.vulnerabilities
-        for attr in ("counts", "severity_counts", "by_severity", "summary"):
-            d = getattr(source, attr, None)
-            if isinstance(d, dict):
-                out: dict[str, int] = {}
-                for k, val in d.items():
-                    try:
-                        out[str(k).lower()] = int(val)
-                    except Exception:
-                        continue
-                if out:
-                    return out
-
-        findings = getattr(source, "findings", None)
-        if isinstance(findings, list):
-            out: dict[str, int] = {}
-            for f in findings:
-                sev = None
-                if isinstance(f, dict):
-                    sev = f.get("severity") or f.get("sev") or f.get("level")
-                else:
-                    sev = getattr(f, "severity", None) or getattr(f, "sev", None) or getattr(f, "level", None)
-                if sev is None:
-                    continue
-                key = str(sev).lower()
-                out[key] = out.get(key, 0) + 1
-            if out:
-                return out
-
-    return {}
-
-def _format_vuln_counts(counts: dict[str, int]) -> str:
-    if not counts:
-        return "(no counts available)"
-    order = ["critical", "high", "medium", "low", "info"]
-    parts: list[str] = []
-    for k in order:
-        if k in counts:
-            parts.append(f"{k}={counts[k]}")
-    # include any other severities
-    for k in sorted([k for k in counts.keys() if k not in set(order)]):
-        parts.append(f"{k}={counts[k]}")
-    return ", ".join(parts)
-
-def _exposure_threats(result, limit: int = 3) -> list[str]:
-    """Best-effort extraction of exposure findings from result."""
-    possible_sources: list[object] = []
-
-    e = getattr(result, "exposure", None)
-    if e is not None:
-        possible_sources.append(e)
-
-    out: list[str] = []
-
-    for source in possible_sources:
-        candidates = []
-
-        if isinstance(source, dict):
-            for key in ("threats", "findings", "signals", "exposures", "services", "ports"):
-                val = source.get(key)
-                if isinstance(val, list):
-                    candidates = val
-                    break
-        else:
-            for attr in ("threats", "findings", "signals", "exposures"):
-                val = getattr(source, attr, None)
-                if isinstance(val, list):
-                    candidates = val
-                    break
-
-        for item in candidates:
-            if len(out) >= limit:
-                return out
-
-            if isinstance(item, str):
-                s = item.strip()
-                if s:
-                    out.append(s)
-                continue
-
-            if isinstance(item, dict):
-                name = item.get("name") or item.get("title") or item.get("type") or item.get("signal")
-                port = item.get("port")
-                service = item.get("service") or item.get("protocol")
-                host = item.get("host") or item.get("ip") or item.get("target")
-                bits = [str(x) for x in [name, host] if x]
-                if port or service:
-                    bits.append(f"{service or ''}{':' if service and port else ''}{port or ''}".strip(":"))
-                s = " — ".join(bits).strip()
-                if s:
-                    out.append(s)
-                continue
-
-            name = getattr(item, "name", None) or getattr(item, "title", None) or getattr(item, "type", None)
-            if name:
-                out.append(str(name))
-
-    return out
 
 def _print_single_report(result, warnings: list[str], show_warnings: bool) -> None:
     print("\n=== Vendor Risk Report ===")
@@ -273,9 +138,6 @@ def _print_single_report(result, warnings: list[str], show_warnings: bool) -> No
 
     total = float(getattr(result, "total_score", 0.0))
 
-    # --- New: vuln counts and exposure threats
-    vuln_counts = _vuln_counts(result)
-    exposure_threats = _exposure_threats(result, limit=3)
 
 
     def _level(score: float) -> str:
@@ -300,6 +162,29 @@ def _print_single_report(result, warnings: list[str], show_warnings: bool) -> No
         if name == "incident_history":
             return "Incident history gap: prior incidents or limited incident transparency"
         return f"Questionnaire gap: {_clean_category_name(name)} ({score:g})"
+
+    def _amplification_driver_text(amplifications: dict[str, float]) -> list[str]:
+        out: list[str] = []
+        for name, value in sorted(amplifications.items(), key=lambda kv: kv[1], reverse=True):
+            try:
+                score_val = float(value)
+            except Exception:
+                continue
+            if score_val <= 0:
+                continue
+
+            clean = name.replace("_", " ")
+            if name == "sensitive_data" or name == "sensitive_data_exposure":
+                out.append(f"Amplification: sensitive data exposure increased risk ({score_val:.2f})")
+            elif name == "operational_dependency":
+                out.append(f"Amplification: operational dependency increased risk ({score_val:.2f})")
+            elif name == "business_criticality":
+                out.append(f"Amplification: business criticality increased risk ({score_val:.2f})")
+            elif name == "privileged_access":
+                out.append(f"Amplification: privileged access increased risk ({score_val:.2f})")
+            else:
+                out.append(f"Amplification: {clean} increased risk ({score_val:.2f})")
+        return out
 
     # Header
     tier = getattr(result, "tier", "")
@@ -376,20 +261,16 @@ def _print_single_report(result, warnings: list[str], show_warnings: bool) -> No
     elif exposure > 0:
         drivers.append(f"External exposure: present ({exposure:.2f})")
 
-    if exposure_threats:
-        for t in exposure_threats[:2]:
-            drivers.append(f"Exposure finding: {t}")
 
     if vulns >= 15:
         drivers.append(f"Vulnerabilities: elevated ({vulns:.2f})")
     elif vulns > 0:
         drivers.append(f"Vulnerabilities: present ({vulns:.2f})")
 
-    if vuln_counts:
-        drivers.append(f"Vulnerability breakdown: {_format_vuln_counts(vuln_counts)}")
 
-    if amps_total > 0:
-        drivers.append(f"Amplifying factors increased the score by {amps_total:.2f} before impact scaling.")
+    amp_drivers = _amplification_driver_text(dict(getattr(result, "amplifications", {}) or {}))
+    for d in amp_drivers[:2]:
+        drivers.append(d)
 
     if mult > 1.0:
         drivers.append(f"Business impact increased the overall score with a {mult:g}x multiplier.")
@@ -413,6 +294,157 @@ def _print_single_report(result, warnings: list[str], show_warnings: bool) -> No
         print(f"  {i}. {r}")
 
     print()
+
+
+# Markdown export helper for single-vendor report
+def _export_markdown_report(result, warnings: list[str]) -> str:
+    """Create a polished markdown version of the single-vendor risk report."""
+    control = float(getattr(result.control, "score", 0.0))
+    exposure = float(getattr(result.exposure, "score", 0.0))
+    vulns = float(getattr(result.vulnerabilities, "score", 0.0))
+    amps_total = float(sum(getattr(result, "amplifications", {}).values())) if getattr(result, "amplifications", None) else 0.0
+    mult = float(getattr(result.impact, "multiplier", 1.0))
+    total = float(getattr(result, "total_score", 0.0))
+
+    tier = str(getattr(result, "tier", ""))
+    vendor_name = str(getattr(result, "vendor_name", "Unknown Vendor"))
+    confidence = _confidence_label(warnings)
+
+    if tier == "HIGH":
+        decision = "ESCALATE FOR SECURITY REVIEW"
+    elif tier == "MEDIUM":
+        decision = "REVIEW BEFORE APPROVAL"
+    elif tier == "LOW":
+        decision = "APPROVE"
+    else:
+        decision = "UNKNOWN"
+
+    cat_scores = dict(getattr(result.control, "category_scores", {}) or {})
+    top_cats = sorted(cat_scores.items(), key=lambda kv: kv[1], reverse=True)[:2]
+
+    summary_parts: list[str] = []
+    if exposure > 0:
+        summary_parts.append("elevated external exposure")
+    if vulns > 0:
+        summary_parts.append("elevated vulnerability risk")
+    if any(float(v) > 0 for _, v in top_cats):
+        summary_parts.append("questionnaire control gaps")
+
+    if not summary_parts:
+        summary_text = "No major risk signals detected from questionnaire or external signals."
+    else:
+        summary_text = f"This vendor is {tier} risk due to " + ", ".join(summary_parts) + "."
+
+    def _clean_category_name(name: str) -> str:
+        return name.replace("_", " ").title()
+
+    def _category_driver_text(name: str, score: float) -> str:
+        if name == "compliance":
+            return "Compliance gap: missing or insufficient compliance evidence"
+        if name == "access_control":
+            return "Access control gap: weak authentication controls"
+        if name == "data_protection":
+            return "Data protection gap: unclear or insufficient encryption safeguards"
+        if name == "incident_history":
+            return "Incident history gap: prior incidents or limited incident transparency"
+        return f"Questionnaire gap: {_clean_category_name(name)} ({score:g})"
+
+    def _amplification_driver_text(amplifications: dict[str, float]) -> list[str]:
+        out: list[str] = []
+        for name, value in sorted(amplifications.items(), key=lambda kv: kv[1], reverse=True):
+            try:
+                score_val = float(value)
+            except Exception:
+                continue
+            if score_val <= 0:
+                continue
+
+            clean = name.replace("_", " ")
+            if name == "sensitive_data" or name == "sensitive_data_exposure":
+                out.append(f"Amplification: sensitive data exposure increased risk ({score_val:.2f})")
+            elif name == "operational_dependency":
+                out.append(f"Amplification: operational dependency increased risk ({score_val:.2f})")
+            elif name == "business_criticality":
+                out.append(f"Amplification: business criticality increased risk ({score_val:.2f})")
+            elif name == "privileged_access":
+                out.append(f"Amplification: privileged access increased risk ({score_val:.2f})")
+            else:
+                out.append(f"Amplification: {clean} increased risk ({score_val:.2f})")
+        return out
+
+    drivers: list[str] = []
+    for k, v in top_cats:
+        try:
+            score_val = float(v)
+        except Exception:
+            continue
+        if score_val > 0:
+            drivers.append(_category_driver_text(k, score_val))
+
+    if exposure >= 12:
+        drivers.append(f"External exposure: elevated ({exposure:.2f})")
+    elif exposure > 0:
+        drivers.append(f"External exposure: present ({exposure:.2f})")
+
+    if vulns >= 15:
+        drivers.append(f"Vulnerabilities: elevated ({vulns:.2f})")
+    elif vulns > 0:
+        drivers.append(f"Vulnerabilities: present ({vulns:.2f})")
+
+    for d in _amplification_driver_text(dict(getattr(result, "amplifications", {}) or {}))[:2]:
+        drivers.append(d)
+
+    if mult > 1.0:
+        drivers.append(f"Business impact increased the overall score with a {mult:g}x multiplier.")
+
+    lines: list[str] = []
+    lines.append(f"# Vendor Risk Report — {vendor_name}")
+    lines.append("")
+    lines.append("## Overview")
+    lines.append("")
+    lines.append("| Field | Value |")
+    lines.append("|---|---|")
+    lines.append(f"| Vendor | {vendor_name} |")
+    lines.append(f"| Total Risk Score (0-100) | {total:.2f} |")
+    lines.append(f"| Risk Tier | {tier} |")
+    lines.append(f"| Assessment Confidence | {confidence} |")
+    lines.append(f"| Decision | {decision} |")
+    lines.append("")
+    lines.append("## Summary")
+    lines.append("")
+    lines.append(summary_text)
+    lines.append("")
+    lines.append("## Hybrid Breakdown")
+    lines.append("")
+    lines.append("| Component | Value |")
+    lines.append("|---|---|")
+    lines.append(f"| Questionnaire controls | {control:.2f} |")
+    lines.append(f"| External exposure | {exposure:.2f} |")
+    lines.append(f"| Vulnerabilities | {vulns:.2f} |")
+    if amps_total > 0:
+        lines.append(f"| Amplifications | {amps_total:.2f} |")
+    lines.append(f"| Impact multiplier | x{mult:g} |")
+    lines.append("")
+    lines.append("## Key Drivers")
+    lines.append("")
+    if drivers:
+        for d in drivers[:5]:
+            lines.append(f"- {d}")
+    else:
+        lines.append("- No dominant drivers identified.")
+    lines.append("")
+    lines.append("## Recommended Actions")
+    lines.append("")
+    for i, r in enumerate(_recommendations(result)[:3], start=1):
+        lines.append(f"{i}. {r}")
+    if warnings:
+        lines.append("")
+        lines.append("## Validation Warnings")
+        lines.append("")
+        for w in warnings:
+            lines.append(f"- {w}")
+
+    return "\n".join(lines) + "\n"
 
 
 _ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
@@ -513,8 +545,6 @@ def _print_ranking(rows: list[dict], show_warnings: bool) -> None:
     print()
 
 
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Vendor Risk Assessment CLI")
 
@@ -524,6 +554,7 @@ def main() -> int:
     mode.add_argument("--folder", help="Folder containing vendor JSON files to compare")
     parser.add_argument("--weights", default="data/risk_weights.json", help="Path to risk weights JSON")
     parser.add_argument("--show-warnings", action="store_true", help="Print validation warnings")
+    parser.add_argument("--export-md", help="Export the single vendor report to a markdown file")
     args = parser.parse_args()
 
     weights_path = Path(args.weights)
@@ -536,6 +567,13 @@ def main() -> int:
 
         result = score_vendor(vendor_data, weights_data)
         _print_single_report(result, warnings, args.show_warnings)
+
+        if args.export_md:
+            md = _export_markdown_report(result, warnings)
+            out_path = Path(args.export_md)
+            out_path.write_text(md, encoding="utf-8")
+            print(f"Markdown report written to: {out_path}")
+
         return 0
     
 
