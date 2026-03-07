@@ -1,0 +1,27 @@
+{
+    "vendor_name": "NavBoston",
+    "responses": {
+      "mfa": "yes",
+      "sso": "yes",
+      "encrypt_at_rest": "yes",
+      "encrypt_in_transit": "yes",
+      "soc2": "yes",
+      "breach_3y": "no"
+    },
+    "external_scan": {
+      "open_ports": [443],
+      "critical_services_exposed": 0,
+      "tls_grade": "B",
+      "security_headers_missing": 1
+    },
+    "vulnerabilities": {
+      "max_cvss": 5.8,
+      "critical_cves": 0,
+      "high_cves": 2
+    },
+    "data_profile": {
+      "handles_pii": true,
+      "handles_financials": true,
+      "records_estimate": 15000000
+    }
+  }

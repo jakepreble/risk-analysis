@@ -1,0 +1,27 @@
+{
+    "vendor_name": "PrivateDocs",
+    "responses": {
+      "mfa": "yes",
+      "sso": "yes",
+      "encrypt_at_rest": "yes",
+      "encrypt_in_transit": "yes",
+      "soc2": "yes",
+      "breach_3y": "no"
+    },
+    "external_scan": {
+      "open_ports": [],
+      "critical_services_exposed": 0,
+      "tls_grade": "A",
+      "security_headers_missing": 0
+    },
+    "vulnerabilities": {
+      "max_cvss": 0.0,
+      "critical_cves": 0,
+      "high_cves": 0
+    },
+    "data_profile": {
+      "handles_pii": false,
+      "handles_financials": false,
+      "records_estimate": 500
+    }
+  }
