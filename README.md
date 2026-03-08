@@ -1,60 +1,57 @@
 # Vendor Risk Assessment Tool
 
-A Python-based cybersecurity project that evaluates third-party vendors using questionnaire responses, external exposure signals, vulnerability findings, and business impact factors to generate explainable risk scores.
+A Python-based cybersecurity tool that evaluates third-party vendors using questionnaire responses, external exposure signals, vulnerability findings, and business impact factors to generate explainable risk scores.
+
+| Single Vendor Assessment | Multi Vendor Ranking |
+|---|---|
+| <img src="assets/single-vendor-report.png" width="600"> | <img src="assets/multi-vendor-ranking.png" width="400"> |
 
 ## Overview
 
-This project simulates a security review workflow. Instead of relying on a simple checklist, it combines multiple security and business inputs into a single assessment that is easier to review, compare, and defend.
-
-The goal was to build something relevant to real-world cybersecurity analyst, security risk, GRC, and third-party risk work.
-
-### Single-vendor assessment
-
-![Single vendor risk report](assets/single-vendor-report.png)
-
-### Multi-vendor ranking
-
-![Multi-vendor risk ranking](assets/multi-vendor-ranking.png)
+This project simulates a vendor security review workflow used in cybersecurity risk and third-party risk management.  
+The tool combines multiple technical and business risk signals to produce structured vendor risk assessments and comparisons.
 
 ## Features
 
 - Evaluates questionnaire responses using weighted security control scoring
-- Assesses external exposure signals that expand the vendor's attack surface
+- Assesses external exposure signals that expand a vendor's attack surface
 - Analyzes vulnerability findings that increase exploitability risk
-- Applies impact multipliers and contextual amplification factors
-- Produces an explainable report with key drivers and recommendations
-- Compares multiple vendors in batch mode and ranks them by risk
-- Exports single-vendor assessments to markdown for reporting
+- Applies business impact multipliers and contextual amplification factors
+- Produces explainable reports with key drivers and recommendations
+- Compares multiple vendors and ranks them by risk
+- Exports single-vendor assessments to markdown reports
 
-## Cybersecurity Concepts Demonstrated
+## Risk Model
 
-This project highlights several core cybersecurity concepts used in vendor and third-party risk analysis:
+The scoring model reflects how security teams evaluate vendor risk by combining several signals.
 
-- **Access control risk:** evaluates weaknesses like missing MFA or SSO support
-- **Data protection risk:** considers encryption and handling of sensitive data
-- **Compliance risk:** accounts for missing audit evidence or weak assurance posture
-- **Incident history risk:** incorporates past incidents and transparency into scoring
-- **Attack surface awareness:** external exposure contributes to vendor risk
-- **Vulnerability-based risk:** known weaknesses increase exploitability and urgency
-- **Business impact analysis:** vendors with privileged access, sensitive data access, or operational dependency create higher downstream risk
-- **Risk-based decision making:** outputs support escalation, review, or approval decisions
-- **Explainable security reporting:** reports show why a vendor scored the way it did, not just the final number
+### Security Controls
 
-## How It Works
+Vendors are evaluated using weighted questionnaire responses across categories such as:
 
-The final score is driven by four main inputs:
+- **Access Control** — authentication strength (MFA, SSO)
+- **Data Protection** — encryption and sensitive data handling
+- **Compliance** — audit evidence and assurance posture
+- **Incident History** — past incidents and response transparency
 
-1. **Questionnaire controls**  
-   Weighted questions evaluate vendors across categories like access control, data protection, compliance, and incident history.
+### External Exposure
 
-2. **External exposure**  
-   Accounts for whether the vendor has risky or unnecessary internet-facing exposure.
+Internet-facing services increase a vendor's attack surface and potential entry points.
 
-3. **Vulnerabilities**  
-   Adds risk based on known security weaknesses and patching concerns.
+### Vulnerabilities
 
-4. **Impact and amplifications**  
-   Adjusts the score based on business criticality and contextual risk factors such as privileged access, sensitive data handling, and operational dependency.
+Known vulnerabilities increase exploitability and raise the vendor's risk score.
+
+### Business Impact Factors
+
+Risk is amplified when vendors have:
+
+- privileged system access
+- operational dependency
+- sensitive data exposure
+- high business criticality
+
+These factors increase the final score to reflect the potential impact of a compromise.
 
 ## CLI Usage
 
@@ -72,4 +69,5 @@ python -m src.main --vendor data/vendor1.json --export-md reports/vendor_report.
 ### Compare multiple vendors
 ```bash
 python -m src.main --folder data/multivendor
+```
 
