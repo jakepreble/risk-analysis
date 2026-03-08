@@ -70,4 +70,3 @@ python -m src.main --vendor data/vendor1.json --export-md reports/vendor_report.
 ```bash
 python -m src.main --folder data/multivendor
 ```
-
